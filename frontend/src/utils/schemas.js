@@ -12,11 +12,17 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Required"),
 });
 
-export const signupSchema = z.object({
-  name: z.string().trim().min(2, "Name too short").max(80),
-  email: z.string().email("Valid email"),
-  password,
-});
+export const signupSchema = z
+  .object({
+    name: z.string().trim().min(2, "Name too short").max(80),
+    email: z.string().email("Valid email"),
+    password,
+    confirmPassword: z.string().min(1, "Required"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords must match",
+    path: ["confirmPassword"],
+  });
 
 export const projectSchema = z.object({
   name: z.string().trim().min(3).max(100),

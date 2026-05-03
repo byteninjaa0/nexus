@@ -13,7 +13,7 @@ export function PublicPageMotionLayout() {
         initial="initial"
         animate="animate"
         exit="exit"
-        style={{ minHeight: "100dvh" }}
+        style={{ minHeight: "100dvh", width: "100%" }}
       >
         <Outlet />
       </motion.div>
