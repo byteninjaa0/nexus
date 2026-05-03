@@ -4,8 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node --watch src/app.js",
-    "start": "sh -c \"npx prisma migrate deploy && node src/app.js\"",
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
+    "build": "npx prisma generate",
+    "migrate": "npx prisma migrate deploy",
+    "seed": "node prisma/seed.js",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "migrate:deploy": "prisma migrate deploy",
@@ -31,6 +34,7 @@
     "uuid": "^10.0.0"
   },
   "devDependencies": {
+    "nodemon": "^3.1.7",
     "prisma": "^5.22.0"
   }
 }

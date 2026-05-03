@@ -1,13 +1,19 @@
-FROM node:20-alpine AS deps
-WORKDIR /app
-COPY package.json package-lock.json* ./
-RUN npm ci 2>/dev/null || npm install
+FROM node:20-slim
 
-FROM node:20-alpine AS runner
+RUN apt-get update -y && \
+    apt-get install -y openssl libssl-dev ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
-ENV NODE_ENV=production
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+
+COPY package*.json ./
+RUN npm ci
+
+COPY prisma ./prisma
 RUN npx prisma generate
-EXPOSE 3001
+
+COPY . .
+
+EXPOSE 3000
+
 CMD ["sh", "-c", "npx prisma migrate deploy && node src/app.js"]
