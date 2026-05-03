@@ -52,45 +52,43 @@ function enrichProgress(project) {
 export async function createProject(req, res) {
   const { name, description, color, icon, deadline, memberIds } = req.body;
 
-  const project = await prisma.$transaction(async (tx) => {
-    const p = await tx.project.create({
-      data: {
-        name: name.trim(),
-        description: description?.trim() || null,
-        color: color || "#3b82f6",
-        icon: icon || "folder",
-        deadline: deadline ? new Date(deadline) : null,
-        createdById: req.user.id,
-        members: {
-          create: [{ userId: req.user.id, role: "OWNER" }],
-        },
+  const p = await prisma.project.create({
+    data: {
+      name: name.trim(),
+      description: description?.trim() || null,
+      color: color || "#3b82f6",
+      icon: icon || "folder",
+      deadline: deadline ? new Date(deadline) : null,
+      createdById: req.user.id,
+      members: {
+        create: [{ userId: req.user.id, role: "OWNER" }],
       },
-      include: projectInclude,
-    });
+    },
+    include: projectInclude,
+  });
 
-    const ids = Array.isArray(memberIds) ? [...new Set(memberIds)].filter((id) => id !== req.user.id) : [];
-    for (const uid of ids) {
-      const u = await tx.user.findUnique({ where: { id: uid } });
-      if (u && !u.deactivated) {
-        await tx.projectMember.create({
-          data: { projectId: p.id, userId: uid, role: "MEMBER" },
-        });
-        await notifyUser({
-          userId: uid,
-          type: "MEMBER_ADDED",
-          message: `You were added to project "${p.name}"`,
-          link: `/app/projects/${p.id}`,
-        });
-      }
+  const ids = Array.isArray(memberIds) ? [...new Set(memberIds)].filter((id) => id !== req.user.id) : [];
+  for (const uid of ids) {
+    const u = await prisma.user.findUnique({ where: { id: uid } });
+    if (u && !u.deactivated) {
+      await prisma.projectMember.create({
+        data: { projectId: p.id, userId: uid, role: "MEMBER" },
+      });
+      await notifyUser({
+        userId: uid,
+        type: "MEMBER_ADDED",
+        message: `You were added to project "${p.name}"`,
+        link: `/app/projects/${p.id}`,
+      });
     }
+  }
 
-    return tx.project.findUnique({
-      where: { id: p.id },
-      include: {
-        ...projectInclude,
-        tasks: { select: { id: true, status: true } },
-      },
-    });
+  const project = await prisma.project.findUnique({
+    where: { id: p.id },
+    include: {
+      ...projectInclude,
+      tasks: { select: { id: true, status: true } },
+    },
   });
 
   await logActivity({
